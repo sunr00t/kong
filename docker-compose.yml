@@ -1,0 +1,54 @@
+version: '3.9'
+
+services:
+    kong-migrations:
+      image: kong:latest
+      entrypoint: sh -c "sleep 10 && kong migrations bootstrap -v"
+      environment:
+        KONG_DATABASE: ${KONG_DATABASE}
+        KONG_PG_DATABASE: ${KONG_PG_DATABASE}
+        KONG_PG_HOST: ${KONG_PG_HOST}
+        KONG_PG_PORT: ${KONG_PG_PORT}
+        KONG_PG_USER: ${KONG_PG_USER}
+        KONG_PG_PASSWORD: ${KONG_PG_PASSWORD}
+      restart: "no"
+
+    kong:
+      image: kong:latest
+      environment:
+        KONG_DATABASE: ${KONG_DATABASE}
+        KONG_PG_DATABASE: ${KONG_PG_DATABASE}
+        KONG_PG_HOST: ${KONG_PG_HOST}
+        KONG_PG_PORT: ${KONG_PG_PORT}
+        KONG_PG_USER: ${KONG_PG_USER}
+        KONG_PG_PASSWORD: ${KONG_PG_PASSWORD}
+        KONG_PROXY_ACCESS_LOG: ${KONG_PROXY_ACCESS_LOG}
+        KONG_ADMIN_ACCESS_LOG: ${KONG_ADMIN_ACCESS_LOG}
+        KONG_PROXY_ERROR_LOG: ${KONG_PROXY_ERROR_LOG}
+        KONG_ADMIN_ERROR_LOG: ${KONG_ADMIN_ERROR_LOG}
+        KONG_ADMIN_LISTEN: ${KONG_ADMIN_LISTEN}
+      restart: "always"
+      ports:
+      - ${KONG_HTTP_PORT}:8000
+      - ${KONG_HTTPS_PORT}:8443
+      - ${KONG_API_HTTP_PORT}:8001
+      - ${KONG_API_HTTPS_PORT}:8444
+        
+    konga:
+      image: pantsel/konga
+      environment:
+        NODE_ENV: ${KONGA_ENV}
+        PORT: ${KONGA_SERVER_PORT}
+        DB_ADAPTER: ${KONGA_DB_ADAPTER}
+        DB_HOST: ${KONGA_PG_HOST}
+        DB_PORT: ${KONGA_DB_PORT}
+        DB_DATABASE: ${KONGA_PG_DATABASE}
+        DB_USER: ${KONGA_PG_USER}
+        DB_PASSWORD: ${KONGA_PG_PASSWORD}
+        KONGA_LOG_LEVEL: ${KONGA_LOG_LEVEL}
+        KONGA_HOOK_TIMEOUT: 100000
+      restart: "always"
+      depends_on: 
+        - kong
+      ports:
+      - ${KONGA_SERVER_PORT}:1337
